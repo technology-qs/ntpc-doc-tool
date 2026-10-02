@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "新北市公文小工具",
+  "version": "0.1.0",
+  "description": "自動統一命名並歸檔新北市公文系統匯出的本文 PDF 與附件",
+  "permissions": ["downloads", "storage"],
+  "host_permissions": ["*://*.ntpc.gov.tw/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.ntpc.gov.tw/*"],
+      "js": ["common.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

@@ -29,9 +29,16 @@ function extractDocFields() {
 
   const docNoMatch = text.match(/公文文號[:：]\s*([^\s（(]+)/);
 
-  const issueNoMatch = text.match(
-    /([一-鿿A-Za-z0-9（）()]{1,14}字第[0-9A-Za-z]+號)/
-  );
+  // 「XX字第YYYY號」這個格式很寬鬆，頁面上其他跟目前公文完全無關的 frame
+  // （例如入口網站的公告/憑證安裝說明 iframe）裡如果剛好有類似格式的文字
+  // （例如公告自己的發文字號），也會符合這個 regex、被誤判成這份公文的
+  // 發文字號。實測踩過這個坑：那種無關 frame 自己完全不會提到「公文文號：」
+  // （它本身就不是一份公文），所以只有「這個 frame 自己也找得到『公文文號：』
+  // 標籤」時，才信任這個 frame 抓到的發文字號——真正的公文頁面（不管是「函」
+  // 還是「以稿代簽」）這兩個標籤一定同時出現在同一個 frame 裡（實測驗證過）。
+  const issueNoMatch = docNoMatch
+    ? text.match(/([一-鿿A-Za-z0-9（）()]{1,14}字第[0-9A-Za-z]+號)/)
+    : null;
   const issueNo = issueNoMatch ? issueNoMatch[1] : "";
 
   const dateMatch = text.match(

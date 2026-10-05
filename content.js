@@ -34,9 +34,28 @@ function extractDocFields() {
   );
   const issueNo = issueNoMatch ? issueNoMatch[1] : "";
 
+  const dateMatch = text.match(
+    /中華民國\s*(\d{1,3})年(\d{1,2})月(\d{1,2})日/
+  );
+  let dateStr = "";
+  if (dateMatch) {
+    const y = parseInt(dateMatch[1], 10) + 1911;
+    const m = dateMatch[2].padStart(2, "0");
+    const d = dateMatch[3].padStart(2, "0");
+    dateStr = `${y}${m}${d}`;
+  }
+
+  // 主旨沒有欄位標籤可以定位，用「找到一個錨點之後，往下找第一個不是速別
+  // 關鍵字、不是附件說明、而且夠長的一行」當主旨。優先用發文字號當錨點
+  // （「函」這類已經發文的文件都有「XX字第YYYY號」）；但「以稿代簽」這種
+  // 還沒發文、只在簽稿階段的文件沒有發文字號，這時候退而求其次改用發文
+  // 日期（「中華民國Ｎ年Ｎ月Ｎ日」）那一行當錨點——實測這種文件的主旨
+  // 一樣會出現在日期後面幾行（日期 → 承辦處室 → 簽稿類別 → 主旨）。沒有
+  // 這兩種錨點的話主旨留空，不硬猜。
   let subject = "";
-  if (issueNo) {
-    const idx = lines.findIndex((l) => l.includes(issueNo));
+  const anchorText = issueNo || (dateMatch ? dateMatch[0] : "");
+  if (anchorText) {
+    const idx = lines.findIndex((l) => l.includes(anchorText));
     if (idx !== -1) {
       for (let i = idx + 1; i < lines.length && i < idx + 6; i++) {
         const line = lines[i];
@@ -47,17 +66,6 @@ function extractDocFields() {
         break;
       }
     }
-  }
-
-  const dateMatch = text.match(
-    /中華民國\s*(\d{1,3})年(\d{1,2})月(\d{1,2})日/
-  );
-  let dateStr = "";
-  if (dateMatch) {
-    const y = parseInt(dateMatch[1], 10) + 1911;
-    const m = dateMatch[2].padStart(2, "0");
-    const d = dateMatch[3].padStart(2, "0");
-    dateStr = `${y}${m}${d}`;
   }
 
   return {
